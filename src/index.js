@@ -1,11 +1,12 @@
 "use strict";
 
-import sha1 from "sha-1";
+import { sha1 } from "sha-1";
 
 const model = Symbol("model");
 const length = Symbol("length");
 const head = Symbol("head");
 const tail = Symbol("tail");
+const createNode = Symbol("createNode");
 
 export class Wayback {
   constructor() {
@@ -20,19 +21,8 @@ export class Wayback {
   }
 
   push(data) {
-    // generate an id with sha1
-    //  of parent and data
-    let id = sha1(JSON.stringify({
-      parent: this[head],
-      data: data
-    }));
-
     // create a new node
-    this[model][id] = {
-      data: data,
-      parent: this[head],
-      child: null
-    };
+    let id = this[createNode](this[head], data);
 
     // set the new node as the child of the
     // parent if it exists
@@ -76,6 +66,72 @@ export class Wayback {
     // decrement the number if items
     this[length] -= 1;
     return item;
+  }
+
+  insert(parent, data) {
+    // unknown parent
+    if (!(parent in this[model])) {
+      return null;
+    }
+    // just do a push op when inserting to head
+    if (parent === this[head]) {
+      return this.push(data);
+    }
+    let parentModel = this[model][parent];
+    let oldChild = parentModel.child;
+
+    // create a new node with links:
+    // parent <- newNode -> child
+    let insertId = this[createNode](parent, data, parentModel.child);
+
+    // parent -> newNode
+    parentModel.child = insertId;
+
+
+    let curNodeId = oldChild;
+    let prevInsertId = insertId;
+    while (curNodeId) {
+      let curNode = this[model][curNodeId];
+
+      // insert the new node
+      let newInsertId = this[createNode](
+        prevInsertId,
+        curNode.data,
+        curNode.child
+      );
+
+      // update the parent with the new child id
+      this[model][prevInsertId].child = newInsertId;
+      prevInsertId = newInsertId;
+
+      // remove the old node
+      delete this[model][curNodeId];
+
+      // update the head ref
+      if (curNode.child === null) {
+        this[head] = newInsertId;
+      }
+
+      // increment node
+      curNodeId = curNode.child;
+    }
+
+    return insertId;
+  }
+
+  [createNode](parent, data, child=null) {
+    let id = sha1(JSON.stringify({
+      parent: parent,
+      data: data
+    }));
+
+    // create a new node
+    this[model][id] = {
+      data: data,
+      parent: parent,
+      child: child
+    };
+    return id;
   }
 
   length() {
