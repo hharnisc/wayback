@@ -229,4 +229,14 @@ describe("wayback tests", () => {
     // around for recalculating ids
     expect(model[id2].parent).to.equal(id);
   });
+
+  it("does return data at a given revision", () => {
+    expect(wayback.getRevision("youdontknowme")).to.equal(null);
+
+    let data = {message: "sup"};
+    let id = wayback.push(data);
+
+    expect(wayback.getRevision(id)).to.equal(data);
+  });
+
 });

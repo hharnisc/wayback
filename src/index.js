@@ -26,6 +26,14 @@ export class Wayback {
     return revision in this[model];
   }
 
+  getRevision(revision) {
+    if (this.hasRevision(revision)) {
+      return this[model][revision].data;
+    } else {
+      return null;
+    }
+  }
+
   push(data) {
     // create a new node
     let id = this[createNode](this[head], data);
