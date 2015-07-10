@@ -1,0 +1,36 @@
+{
+  "name": "wayback",
+  "version": "0.0.1",
+  "description": "Manage sequences of arbitrary data with revisions",
+  "main": "./src/index.js",
+  "dependencies": {},
+  "devDependencies": {
+    "babel": "^5.6.14",
+    "eslint": "^0.24.0",
+    "babel-eslint": "^3.1.20",
+    "gulp": "^3.9.0",
+    "gulp-eslint": "^0.15.0",
+    "mocha": "^2.2.1",
+    "chai": "^2.2.0"
+  },
+  "scripts": {
+    "start": "node .",
+    "test": "./node_modules/mocha/bin/mocha --recursive --compilers js:babel/register",
+    "tdd": "./node_modules/mocha/bin/mocha --recursive --compilers js:babel/register --watch",
+    "prepublish": "babel src --out-dir lib"
+  },
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/hharnisc/wayback"
+  },
+  "keywords": [
+    "revision,history"
+  ],
+  "author": {
+    "name": "Harrison Harnisch",
+    "email": "hharnisc@gmail.com",
+    "url": "https://hharnisc.github.io"
+  },
+  "homepage": "https://github.com/hharnisc/wayback",
+  "license": "MIT"
+}
