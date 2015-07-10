@@ -32,12 +32,22 @@ describe("wayback tests", () => {
   });
 
   it("does report correct length", () => {
-    // push new data onto wayback
     let data = {message: "sup"};
     wayback.push(data);
-    expect(wayback.length(), 1);
+    expect(wayback.length()).to.equal(1);
     wayback.push(data);
-    expect(wayback.length(), 2);
+    expect(wayback.length()).to.equal(2);
+  });
+
+  it("does report correct parent id", () => {
+    let data = {message: "sup"};
+    let id = wayback.push(data);
+    expect(wayback.head()).to.equal(id);
+    expect(wayback.tail()).to.equal(id);
+
+    let id2 = wayback.push(data);
+    expect(wayback.head()).to.equal(id2);
+    expect(wayback.tail()).to.equal(id);
   });
 
 });
