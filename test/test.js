@@ -61,4 +61,14 @@ describe("wayback tests", () => {
     expect(model[id2].parent).to.equal(id);
   });
 
+  it("does report correct child", () => {
+    let data = {message: "sup"};
+    let model = wayback.model();
+    let id = wayback.push(data);
+    expect(model[id].child).to.equal(null);
+
+    let id2 = wayback.push(data);
+    expect(model[id].child).to.equal(id2);
+
+  });
 });
