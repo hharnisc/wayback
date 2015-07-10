@@ -47,6 +47,33 @@ export class Wayback {
     return id;
   }
 
+  pop() {
+    // if empty return null
+    if (!this[tail]) {
+      return null;
+    }
+
+    // get the current tail item
+    let modelItem = this[model][this[tail]];
+    let item = {};
+    item[this[tail]] = modelItem;
+
+    delete this[model][this[tail]];
+    // if there are 2 or more revisions update the child
+    if (this[length] > 1) {
+      this[tail] = modelItem.child;
+      this[model][modelItem.child].parent = null;
+    } else {
+      // otherwise clear the head and tail revisions
+      this[tail] = null;
+      this[head] = null;
+    }
+
+    // decrement the number if items
+    this[length] -= 1;
+    return item;
+  }
+
   length() {
     return this[length];
   }
