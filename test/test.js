@@ -1,16 +1,21 @@
 /*global describe*/
 /*global beforeEach*/
-/*global afterEach*/
-/*global before*/
-/*global after*/
 /*global it*/
 
 "use strict";
 
 import { expect } from "chai";
+import { Wayback } from "../src/index";
+
 
 describe("wayback tests", () => {
-  it("succeeds", () => {
-    expect(123).to.equal(123);
+  let wayback;
+
+  beforeEach(() => {
+    wayback = new Wayback();
+  });
+
+  it("does create empty wayback", () => {
+    expect(wayback.model()).to.eql({});
   });
 });
