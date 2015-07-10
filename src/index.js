@@ -34,6 +34,21 @@ export class Wayback {
     }
   }
 
+  getSequence(revision) {
+    if (this.hasRevision(revision)) {
+      let sequence = [];
+      let curRevision = this[model][revision].child;
+      while (curRevision) {
+        let curModel = this[model][curRevision];
+        sequence.push(curModel.data);
+        curRevision = curModel.child;
+      }
+      return sequence;
+    } else {
+      return null;
+    }
+  }
+
   push(data) {
     // create a new node
     let id = this[createNode](this[head], data);

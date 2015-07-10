@@ -239,4 +239,24 @@ describe("wayback tests", () => {
     expect(wayback.getRevision(id)).to.equal(data);
   });
 
+  it("does return a sequence of data after a revision", () => {
+    expect(wayback.getSequence("youdontknowme")).to.equal(null);
+
+    let data = {message: "sup"};
+    let id = wayback.push(data);
+
+    expect(wayback.getSequence(id)).to.eql([]);
+
+    let data2 = {message: "sup2"};
+    let id2 = wayback.push(data2);
+
+    expect(wayback.getSequence(id)).to.eql([data2]);
+
+    let data3 = {message: "sup3"};
+    let id3 = wayback.push(data3);
+
+    expect(wayback.getSequence(id2)).to.eql([data3]);
+    expect(wayback.getSequence(id)).to.eql([data2, data3]);
+  });
+
 });
