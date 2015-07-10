@@ -20,6 +20,10 @@ export class Wayback {
     return this[model];
   }
 
+  hasRevision(revision) {
+    return revision in this[model];
+  }
+
   push(data) {
     // create a new node
     let id = this[createNode](this[head], data);
@@ -70,7 +74,7 @@ export class Wayback {
 
   insert(parent, data) {
     // unknown parent
-    if (!(parent in this[model])) {
+    if (!this.hasRevision(parent)) {
       return null;
     }
     // just do a push op when inserting to head

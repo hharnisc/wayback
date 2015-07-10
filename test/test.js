@@ -191,4 +191,13 @@ describe("wayback tests", () => {
     let insertId = wayback.insert("youdontknowme", insertData);
     expect(insertId).to.equal(null);
   });
+
+  it("does check for revision", () => {
+     expect(wayback.hasRevision("youdontknowme")).to.equal(false);
+
+     let data = {message: "sup"};
+     let id = wayback.push(data);
+
+     expect(wayback.hasRevision(id)).to.equal(true);
+  });
 });
