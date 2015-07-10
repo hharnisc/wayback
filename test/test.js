@@ -28,7 +28,7 @@ describe("wayback tests", () => {
     let model = wayback.model();
     let modelKeys = Object.keys(model);
     expect(modelKeys.length).to.equal(1);
-    expect(model[id]).to.equal(data);
+    expect(model[id].data).to.equal(data);
   });
 
   it("does report correct length", () => {
@@ -39,7 +39,7 @@ describe("wayback tests", () => {
     expect(wayback.length()).to.equal(2);
   });
 
-  it("does report correct parent id", () => {
+  it("does report correct head and tail id", () => {
     let data = {message: "sup"};
     let id = wayback.push(data);
     expect(wayback.head()).to.equal(id);
@@ -48,6 +48,17 @@ describe("wayback tests", () => {
     let id2 = wayback.push(data);
     expect(wayback.head()).to.equal(id2);
     expect(wayback.tail()).to.equal(id);
+  });
+
+  it("does report correct parent", () => {
+    let data = {message: "sup"};
+    let model = wayback.model();
+    let id = wayback.push(data);
+
+    expect(model[id].parent).to.equal(null);
+
+    let id2 = wayback.push(data);
+    expect(model[id2].parent).to.equal(id);
   });
 
 });

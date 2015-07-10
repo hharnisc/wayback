@@ -22,7 +22,10 @@ export class Wayback {
 
   push(data) {
     let id = this[rack]();
-    this[model][id] = data;
+    this[model][id] = {
+      data: data,
+      parent: this[head]
+    };
     this[head] = id;
     if (!this[tail]) {
       this[tail] = id;
