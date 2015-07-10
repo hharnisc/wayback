@@ -7,13 +7,15 @@ const length = Symbol("length");
 const head = Symbol("head");
 const tail = Symbol("tail");
 const createNode = Symbol("createNode");
+const maxRevisions = Symbol("maxRevisions");
 
 export class Wayback {
-  constructor() {
+  constructor(maximumRevisions=null) {
     this[model] = {};
     this[length] = 0;
     this[head] = null;
     this[tail] = null;
+    this[maxRevisions] = maximumRevisions;
   }
 
   model() {
@@ -42,6 +44,10 @@ export class Wayback {
 
     // increment the model length
     this[length] += 1;
+    if (this[maxRevisions] && this[length] > this[maxRevisions]) {
+      this.pop();
+    }
+
     return id;
   }
 
@@ -60,7 +66,7 @@ export class Wayback {
     // if there are 2 or more revisions update the child
     if (this[length] > 1) {
       this[tail] = modelItem.child;
-      this[model][modelItem.child].parent = null;
+      // this[model][modelItem.child].parent = null;
     } else {
       // otherwise clear the head and tail revisions
       this[tail] = null;

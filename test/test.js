@@ -89,7 +89,9 @@ describe("wayback tests", () => {
 
     expect(wayback.head()).to.equal(id3);
     expect(wayback.tail()).to.equal(id2);
-    expect(model[id2].parent).to.equal(null);
+    // NOTE: it's important to keep the parent
+    // around for recalculating ids
+    expect(model[id2].parent).to.equal(id);
     expect(model[id2].child).to.equal(id3);
 
     let item2 = wayback.pop();
@@ -97,7 +99,9 @@ describe("wayback tests", () => {
     expect(item2[id2].data).to.eql(data2);
     expect(wayback.head()).to.equal(id3);
     expect(wayback.tail()).to.equal(id3);
-    expect(model[id3].parent).to.equal(null);
+    // NOTE: it's important to keep the parent
+    // around for recalculating ids
+    expect(model[id3].parent).to.equal(id2);
     expect(model[id3].child).to.equal(null);
 
     let item3 = wayback.pop();
@@ -199,5 +203,30 @@ describe("wayback tests", () => {
      let id = wayback.push(data);
 
      expect(wayback.hasRevision(id)).to.equal(true);
+  });
+
+  it("does handle max revision length", () => {
+    // create a wayback that can hold up to 2 revisions
+    var shortWayback = new Wayback(2);
+    var model = shortWayback.model();
+    let data = "a short message";
+    let id = shortWayback.push(data);
+    expect(shortWayback.length()).to.equal(1);
+    expect(shortWayback.head()).to.equal(id);
+    expect(shortWayback.tail()).to.equal(id);
+
+    let id2 = shortWayback.push(data);
+    expect(shortWayback.length()).to.equal(2);
+    expect(shortWayback.head()).to.equal(id2);
+    expect(shortWayback.tail()).to.equal(id);
+
+    let id3 = shortWayback.push(data);
+    expect(shortWayback.length()).to.equal(2);
+    expect(shortWayback.head()).to.equal(id3);
+    expect(shortWayback.tail()).to.equal(id2);
+
+    // NOTE: it's important to keep the parent
+    // around for recalculating ids
+    expect(model[id2].parent).to.equal(id);
   });
 });
