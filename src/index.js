@@ -1,8 +1,8 @@
+"use strict";
 
-import * as hat from "hat";
+import sha1 from "sha-1";
 
 const model = Symbol("model");
-const rack = Symbol("rack");
 const length = Symbol("length");
 const head = Symbol("head");
 const tail = Symbol("tail");
@@ -13,7 +13,6 @@ export class Wayback {
     this[length] = 0;
     this[head] = null;
     this[tail] = null;
-    this[rack] = hat.rack();
   }
 
   model() {
@@ -21,8 +20,13 @@ export class Wayback {
   }
 
   push(data) {
-    // generate a random id
-    let id = this[rack]();
+    // generate an id with sha1
+    //  of parent and data
+    let id = sha1(JSON.stringify({
+      parent: this[head],
+      data: data
+    }));
+
     // create a new node
     this[model][id] = {
       data: data,
