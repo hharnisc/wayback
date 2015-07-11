@@ -28,7 +28,7 @@ export class Wayback {
 
   getRevision(revision) {
     if (this.hasRevision(revision)) {
-      return this[model][revision].data;
+      return this[model][revision];
     } else {
       return null;
     }

@@ -236,7 +236,11 @@ describe("wayback tests", () => {
     let data = {message: "sup"};
     let id = wayback.push(data);
 
-    expect(wayback.getRevision(id)).to.equal(data);
+    expect(wayback.getRevision(id)).to.eql({
+      data: data,
+      child: null,
+      parent: null
+    });
   });
 
   it("does return a sequence of data after a revision", () => {
@@ -258,5 +262,4 @@ describe("wayback tests", () => {
     expect(wayback.getSequence(id2)).to.eql([data3]);
     expect(wayback.getSequence(id)).to.eql([data2, data3]);
   });
-
 });
