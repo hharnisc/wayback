@@ -5,7 +5,7 @@
 "use strict";
 
 import { expect } from "chai";
-import { sha1 } from "sha-1";
+import sha1 from "sha-1";
 import { Wayback } from "../src/index";
 
 

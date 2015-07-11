@@ -1,6 +1,6 @@
 "use strict";
 
-import { sha1 } from "sha-1";
+import sha1 from "sha-1";
 
 const model = Symbol("model");
 const length = Symbol("length");

@@ -1,6 +1,6 @@
 {
   "name": "wayback",
-  "version": "0.0.2",
+  "version": "0.0.3",
   "description": "Manage sequences of arbitrary data with revisions",
   "main": "./lib/index.js",
   "dependencies": {
