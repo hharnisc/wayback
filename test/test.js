@@ -262,4 +262,41 @@ describe("wayback tests", () => {
     expect(wayback.getSequence(id2)).to.eql([data3]);
     expect(wayback.getSequence(id)).to.eql([data2, data3]);
   });
+
+  it("does export model", () => {
+    wayback.push({message: "sup"});
+    let exportedModel = wayback.exportModel();
+    expect(exportedModel).to.eql({
+      model: {
+        b074a570a0cd00c34b9eff1d825229b6607bdd3e: {
+          data: {message: "sup"}, parent: null, child: null
+        }
+      },
+      length: 1,
+      head: "b074a570a0cd00c34b9eff1d825229b6607bdd3e",
+      tail: "b074a570a0cd00c34b9eff1d825229b6607bdd3e"
+    });
+  });
+
+  it("does import model", () => {
+    wayback.importModel({
+      model: {
+        b074a570a0cd00c34b9eff1d825229b6607bdd3e: {
+          data: {message: "sup"}, parent: null, child: null
+        }
+      },
+      length: 1,
+      head: "b074a570a0cd00c34b9eff1d825229b6607bdd3e",
+      tail: "b074a570a0cd00c34b9eff1d825229b6607bdd3e"
+    });
+
+    expect(wayback.length()).to.equal(1);
+    expect(wayback.head()).to.equal("b074a570a0cd00c34b9eff1d825229b6607bdd3e");
+    expect(wayback.tail()).to.equal("b074a570a0cd00c34b9eff1d825229b6607bdd3e");
+    expect(wayback.model()).to.eql({
+      b074a570a0cd00c34b9eff1d825229b6607bdd3e: {
+        data: {message: "sup"}, parent: null, child: null
+      }
+    });
+  })
 });

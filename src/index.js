@@ -22,6 +22,24 @@ export class Wayback {
     return this[model];
   }
 
+  exportModel() {
+    return {
+      model: this[model],
+      length: this[length],
+      head: this[head],
+      tail: this[tail]
+    }
+  }
+
+  importModel(newModel) {
+    // TODO: sanitize input
+    // TODO: handle when maximumRevisions is set
+    this[model] = newModel.model;
+    this[length] = newModel.length;
+    this[tail] = newModel.tail;
+    this[head] = newModel.head;
+  }
+
   hasRevision(revision) {
     return revision in this[model];
   }
