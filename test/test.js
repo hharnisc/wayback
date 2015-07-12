@@ -1,7 +1,3 @@
-/*global describe*/
-/*global beforeEach*/
-/*global it*/
-
 "use strict";
 
 import { expect } from "chai";
@@ -298,5 +294,5 @@ describe("wayback tests", () => {
         data: {message: "sup"}, parent: null, child: null
       }
     });
-  })
+  });
 });

@@ -3,7 +3,7 @@
 import sha1 from "sha-1";
 
 const model = Symbol("model");
-const length = Symbol("length");
+const modelLength = Symbol("length");
 const head = Symbol("head");
 const tail = Symbol("tail");
 const createNode = Symbol("createNode");
@@ -12,7 +12,7 @@ const maxRevisions = Symbol("maxRevisions");
 export class Wayback {
   constructor(maximumRevisions=null) {
     this[model] = {};
-    this[length] = 0;
+    this[modelLength] = 0;
     this[head] = null;
     this[tail] = null;
     this[maxRevisions] = maximumRevisions;
@@ -25,17 +25,17 @@ export class Wayback {
   exportModel() {
     return {
       model: this[model],
-      length: this[length],
+      length: this[modelLength],
       head: this[head],
       tail: this[tail]
-    }
+    };
   }
 
   importModel(newModel) {
     // TODO: sanitize input
     // TODO: handle when maximumRevisions is set
     this[model] = newModel.model;
-    this[length] = newModel.length;
+    this[modelLength] = newModel.length;
     this[tail] = newModel.tail;
     this[head] = newModel.head;
   }
@@ -84,8 +84,8 @@ export class Wayback {
     }
 
     // increment the model length
-    this[length] += 1;
-    if (this[maxRevisions] && this[length] > this[maxRevisions]) {
+    this[modelLength] += 1;
+    if (this[maxRevisions] && this[modelLength] > this[maxRevisions]) {
       this.pop();
     }
 
@@ -105,7 +105,7 @@ export class Wayback {
 
     delete this[model][this[tail]];
     // if there are 2 or more revisions update the child
-    if (this[length] > 1) {
+    if (this[modelLength] > 1) {
       this[tail] = modelItem.child;
       // this[model][modelItem.child].parent = null;
     } else {
@@ -115,7 +115,7 @@ export class Wayback {
     }
 
     // decrement the number if items
-    this[length] -= 1;
+    this[modelLength] -= 1;
     return item;
   }
 
@@ -186,7 +186,7 @@ export class Wayback {
   }
 
   length() {
-    return this[length];
+    return this[modelLength];
   }
 
   head() {
