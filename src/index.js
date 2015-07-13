@@ -8,10 +8,12 @@ const head = Symbol("head");
 const tail = Symbol("tail");
 const createNode = Symbol("createNode");
 const maxRevisions = Symbol("maxRevisions");
+const pseudonyms = Symbol("pseudonyms");
 
 export class Wayback {
   constructor(maximumRevisions=null) {
     this[model] = {};
+    this[pseudonyms] = {};
     this[modelLength] = 0;
     this[head] = null;
     this[tail] = null;
@@ -27,7 +29,8 @@ export class Wayback {
       model: this[model],
       length: this[modelLength],
       head: this[head],
-      tail: this[tail]
+      tail: this[tail],
+      pseudonyms: this[pseudonyms]
     };
   }
 
@@ -38,6 +41,7 @@ export class Wayback {
     this[modelLength] = newModel.length;
     this[tail] = newModel.tail;
     this[head] = newModel.head;
+    this[pseudonyms] = newModel.pseudonyms;
   }
 
   hasRevision(revision) {
@@ -120,6 +124,10 @@ export class Wayback {
   }
 
   insert(parent, data) {
+    // check for a pseudonym
+    if (this[pseudonyms][parent]) {
+      parent = this[pseudonyms][parent];
+    }
     // unknown parent
     if (!this.hasRevision(parent)) {
       return null;
@@ -150,6 +158,9 @@ export class Wayback {
         curNode.data,
         curNode.child
       );
+
+      // add a pseudonym
+      this[pseudonyms][curNodeId] = newInsertId;
 
       // update the parent with the new child id
       this[model][prevInsertId].child = newInsertId;

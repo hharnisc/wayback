@@ -253,7 +253,7 @@ describe("wayback tests", () => {
     expect(wayback.getSequence(id)).to.eql([data2]);
 
     let data3 = {message: "sup3"};
-    let id3 = wayback.push(data3);
+    wayback.push(data3);
 
     expect(wayback.getSequence(id2)).to.eql([data3]);
     expect(wayback.getSequence(id)).to.eql([data2, data3]);
@@ -270,7 +270,8 @@ describe("wayback tests", () => {
       },
       length: 1,
       head: "b074a570a0cd00c34b9eff1d825229b6607bdd3e",
-      tail: "b074a570a0cd00c34b9eff1d825229b6607bdd3e"
+      tail: "b074a570a0cd00c34b9eff1d825229b6607bdd3e",
+      pseudonyms: {}
     });
   });
 
@@ -283,7 +284,8 @@ describe("wayback tests", () => {
       },
       length: 1,
       head: "b074a570a0cd00c34b9eff1d825229b6607bdd3e",
-      tail: "b074a570a0cd00c34b9eff1d825229b6607bdd3e"
+      tail: "b074a570a0cd00c34b9eff1d825229b6607bdd3e",
+      pseudonyms: {}
     });
 
     expect(wayback.length()).to.equal(1);
@@ -294,5 +296,24 @@ describe("wayback tests", () => {
         data: {message: "sup"}, parent: null, child: null
       }
     });
+  });
+
+  it("keep pseudonyms on insert", () => {
+    let data = {message: "sup"};
+    let id = wayback.push(data);
+
+    let data2 = {message: "sup again"};
+    let id2 = wayback.push(data2);
+
+    // insert data ater id
+    // this makes id2 change
+    let insertData = {message: "so I forgot something"};
+    wayback.insert(id, insertData);
+
+    // insert data with the old id2,
+    // which should still work as a pseudonym
+    let insertData2 = {message: "very forgetful"};
+    expect(wayback.insert(id2, insertData2))
+      .to.equal("65cb25d527d0873d41a79d2ad80fa67f328c348a");
   });
 });
