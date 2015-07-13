@@ -8,11 +8,15 @@ const head = Symbol("head");
 const tail = Symbol("tail");
 const createNode = Symbol("createNode");
 const maxRevisions = Symbol("maxRevisions");
+const pseudonymMap = Symbol("pseudonymMap");
 const pseudonyms = Symbol("pseudonyms");
+const updatePseudonyms = Symbol("updatePseudonyms");
+const prunePseudonyms = Symbol("prunePseudonyms");
 
 export class Wayback {
   constructor(maximumRevisions=null) {
     this[model] = {};
+    this[pseudonymMap] = {};
     this[pseudonyms] = {};
     this[modelLength] = 0;
     this[head] = null;
@@ -30,6 +34,7 @@ export class Wayback {
       length: this[modelLength],
       head: this[head],
       tail: this[tail],
+      pseudonymMap: this[pseudonymMap],
       pseudonyms: this[pseudonyms]
     };
   }
@@ -41,6 +46,7 @@ export class Wayback {
     this[modelLength] = newModel.length;
     this[tail] = newModel.tail;
     this[head] = newModel.head;
+    this[pseudonymMap] = newModel.pseudonymMap;
     this[pseudonyms] = newModel.pseudonyms;
   }
 
@@ -57,7 +63,7 @@ export class Wayback {
   }
 
   getOrigin(revision) {
-    let origin = this[pseudonyms][revision];
+    let origin = this[pseudonymMap][revision];
     if (origin) {
       return this.getOrigin(origin);
     } else {
@@ -117,6 +123,10 @@ export class Wayback {
     item[this[tail]] = modelItem;
 
     delete this[model][this[tail]];
+
+    // prune any pseudonyms associated with the tail node
+    this[prunePseudonyms](this[tail]);
+
     // if there are 2 or more revisions update the child
     if (this[modelLength] > 1) {
       this[tail] = modelItem.child;
@@ -134,23 +144,23 @@ export class Wayback {
 
   insert(parent, data) {
     // check for a pseudonym
-    parent = this.getOrigin(parent);
+    let originParent = this.getOrigin(parent);
     // unknown parent
-    if (!this.hasRevision(parent)) {
+    if (!this.hasRevision(originParent)) {
       return null;
     }
     // just do a push op when inserting to head
-    if (parent === this[head]) {
+    if (originParent === this[head]) {
       return this.push(data);
     }
-    let parentModel = this[model][parent];
+    let parentModel = this[model][originParent];
     let oldChild = parentModel.child;
 
     // create a new node with links:
-    // parent <- newNode -> child
-    let insertId = this[createNode](parent, data, parentModel.child);
+    // originParent <- newNode -> child
+    let insertId = this[createNode](originParent, data, parentModel.child);
 
-    // parent -> newNode
+    // originParent -> newNode
     parentModel.child = insertId;
 
 
@@ -167,9 +177,10 @@ export class Wayback {
       );
 
       // add a pseudonym
-      this[pseudonyms][curNodeId] = newInsertId;
+      this[pseudonymMap][curNodeId] = newInsertId;
+      this[updatePseudonyms](newInsertId, curNodeId);
 
-      // update the parent with the new child id
+      // update the originParent with the new child id
       this[model][prevInsertId].child = newInsertId;
       prevInsertId = newInsertId;
 
@@ -183,6 +194,12 @@ export class Wayback {
 
       // increment node
       curNodeId = curNode.child;
+    }
+
+    // increment the model length
+    this[modelLength] += 1;
+    if (this[maxRevisions] && this[modelLength] > this[maxRevisions]) {
+      this.pop();
     }
 
     return insertId;
@@ -201,6 +218,28 @@ export class Wayback {
       child: child
     };
     return id;
+  }
+
+  [updatePseudonyms](newRoot, oldRoot) {
+    if (oldRoot in this[pseudonyms]) {
+      this[pseudonyms][oldRoot].push(oldRoot);
+      this[pseudonyms][newRoot] = this[pseudonyms][oldRoot];
+      delete this[pseudonyms][oldRoot];
+    } else {
+      this[pseudonyms][newRoot] = [oldRoot];
+    }
+  }
+
+  [prunePseudonyms](revision) {
+    if (revision in this[pseudonyms]) {
+      for (var pseudo in this[pseudonyms][revision]) {
+        if (this[pseudonyms][revision].hasOwnProperty(pseudo)) {
+          let pseudonymRevision = this[pseudonyms][revision][pseudo];
+          delete this[pseudonymMap][pseudonymRevision];
+        }
+      }
+      delete this[pseudonyms][revision];
+    }
   }
 
   length() {

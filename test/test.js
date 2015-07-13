@@ -168,6 +168,7 @@ describe("wayback tests", () => {
     }
     expect(curIdx).to.equal(expectedDataOrder.length);
     expect(expectedHead).to.equal(wayback.head());
+    expect(wayback.length()).to.equal(5);
   });
 
   it("does insert at head", () =>{
@@ -201,7 +202,7 @@ describe("wayback tests", () => {
      expect(wayback.hasRevision(id)).to.equal(true);
   });
 
-  it("does handle max revision length", () => {
+  it("does handle max revision length pushes", () => {
     // create a wayback that can hold up to 2 revisions
     var shortWayback = new Wayback(2);
     var model = shortWayback.model();
@@ -224,6 +225,33 @@ describe("wayback tests", () => {
     // NOTE: it's important to keep the parent
     // around for recalculating ids
     expect(model[id2].parent).to.equal(id);
+  });
+
+  it("does handle max revision length inserts", () => {
+    // create a wayback that can hold up to 2 revisions
+    var shortWayback = new Wayback(2);
+    var model = shortWayback.model();
+    let data = "a short message";
+    let id = shortWayback.push(data);
+    expect(shortWayback.length()).to.equal(1);
+    expect(shortWayback.head()).to.equal(id);
+    expect(shortWayback.tail()).to.equal(id);
+
+    let id2 = shortWayback.push(data);
+    expect(shortWayback.length()).to.equal(2);
+    expect(shortWayback.head()).to.equal(id2);
+    expect(shortWayback.tail()).to.equal(id);
+
+    let data2 = "another short message";
+    let insertId = shortWayback.insert(id, data2);
+
+    expect(shortWayback.length()).to.equal(2);
+    expect(shortWayback.head()).to.equal(shortWayback.getOrigin(id2));
+    expect(shortWayback.tail()).to.equal(insertId);
+
+    // NOTE: it's important to keep the parent
+    // around for recalculating ids
+    expect(model[insertId].parent).to.equal(id);
   });
 
   it("does return data at a given revision", () => {
@@ -271,6 +299,7 @@ describe("wayback tests", () => {
       length: 1,
       head: "b074a570a0cd00c34b9eff1d825229b6607bdd3e",
       tail: "b074a570a0cd00c34b9eff1d825229b6607bdd3e",
+      pseudonymMap: {},
       pseudonyms: {}
     });
   });
@@ -285,6 +314,7 @@ describe("wayback tests", () => {
       length: 1,
       head: "b074a570a0cd00c34b9eff1d825229b6607bdd3e",
       tail: "b074a570a0cd00c34b9eff1d825229b6607bdd3e",
+      pseudonymMap: {},
       pseudonyms: {}
     });
 
@@ -365,5 +395,99 @@ describe("wayback tests", () => {
     let insertData3 = {message: "very forgetful"};
     expect(wayback.insert(id2, insertData3))
       .to.equal("75333751797a4cd6f8aa870f184d25cb8f1672a5");
+
+    // make sure pseudonyms and pseudonymMap are valid
+    let model = wayback.exportModel();
+    expect(model.pseudonyms).to.eql(
+      { "068cabaebb9b09c06b7300d38056b089e7ed7bb0":
+        [
+          "c0f8c4a7ae3682509dbc4afb5e02c34ce23b1640",
+          "f9897c6c8d74c3ce94e613ba78eedc9db1230912"
+        ]
+      }
+    );
+
+    expect(model.pseudonymMap).to.eql({
+      c0f8c4a7ae3682509dbc4afb5e02c34ce23b1640:
+      'f9897c6c8d74c3ce94e613ba78eedc9db1230912',
+      f9897c6c8d74c3ce94e613ba78eedc9db1230912:
+      '068cabaebb9b09c06b7300d38056b089e7ed7bb0'
+    });
+  });
+
+  it("does prune pseudonyms when they fall out of scope", () => {
+    let data = {message: "sup"};
+    let id = wayback.push(data);
+
+    // id
+
+    let data2 = {message: "sup again"};
+    wayback.push(data2);
+
+    // id, id2
+
+    let data3 = {message: "oh hey"};
+    wayback.push(data3);
+
+    // id, id2, id3
+
+    // insert data after id
+    // this makes id2 change
+    let insertData = {message: "so I forgot something"};
+    let insertId = wayback.insert(id, insertData);
+
+    // id, insertId, id2, id3 <- id2 and id3 have pseudonyms
+
+    // insert data after insertId
+    // this makes id2 change again
+    let insertData2 = {message: "so I forgot another thing"};
+    wayback.insert(insertId, insertData2);
+
+    // id, insertId, insertId2, id2, id3 <- id2 and id3 have 2 pseudonyms
+
+    wayback.pop(); // insertId, insertId2, id2, id3
+    wayback.pop(); // insertId2, id2, id3
+    wayback.pop(); // id2, id3
+
+    // make sure all pseudonyms and maps are in place
+    expect(wayback.exportModel().pseudonyms).to.eql({
+      '068cabaebb9b09c06b7300d38056b089e7ed7bb0':
+       [ 'c0f8c4a7ae3682509dbc4afb5e02c34ce23b1640',
+         'f9897c6c8d74c3ce94e613ba78eedc9db1230912' ],
+      '32dd776b493278455bc4a82c806f7188e2eeb91a':
+       [ 'c0b0a8f77e897e4c50835220c81838302a663813',
+         'a169d027529f6deaa6c19529791b4e5b44c8c682' ]
+    });
+
+    expect(wayback.exportModel().pseudonymMap).to.eql({
+      c0f8c4a7ae3682509dbc4afb5e02c34ce23b1640:
+        'f9897c6c8d74c3ce94e613ba78eedc9db1230912',
+      c0b0a8f77e897e4c50835220c81838302a663813:
+        'a169d027529f6deaa6c19529791b4e5b44c8c682',
+      f9897c6c8d74c3ce94e613ba78eedc9db1230912:
+        '068cabaebb9b09c06b7300d38056b089e7ed7bb0',
+      a169d027529f6deaa6c19529791b4e5b44c8c682:
+      '32dd776b493278455bc4a82c806f7188e2eeb91a' });
+
+    wayback.pop(); // id3 <- pseudonyms get deleted with id2
+
+    // make sure all pseudonyms and maps are in place
+    expect(wayback.exportModel().pseudonyms).to.eql({
+      '32dd776b493278455bc4a82c806f7188e2eeb91a':
+       [ 'c0b0a8f77e897e4c50835220c81838302a663813',
+         'a169d027529f6deaa6c19529791b4e5b44c8c682' ]
+    });
+
+    expect(wayback.exportModel().pseudonymMap).to.eql({
+      c0b0a8f77e897e4c50835220c81838302a663813:
+        'a169d027529f6deaa6c19529791b4e5b44c8c682',
+      a169d027529f6deaa6c19529791b4e5b44c8c682:
+      '32dd776b493278455bc4a82c806f7188e2eeb91a' });
+
+    wayback.pop(); // <- pseudonyms get deleted with id3
+
+    // make sure pseudonyms and pseudonymMap are valid
+    expect(wayback.exportModel().pseudonyms).to.eql({});
+    expect(wayback.exportModel().pseudonymMap).to.eql({});
   });
 });
