@@ -298,14 +298,40 @@ describe("wayback tests", () => {
     });
   });
 
-  it("keep pseudonyms on insert", () => {
+  it("does get origin name from pseudonym", () => {
     let data = {message: "sup"};
     let id = wayback.push(data);
 
     let data2 = {message: "sup again"};
     let id2 = wayback.push(data2);
 
-    // insert data ater id
+    // insert data after id
+    // this makes id2 change
+    let insertData = {message: "so I forgot something"};
+    let insertId = wayback.insert(id, insertData);
+
+    // console.log(wayback.model());
+
+    expect(wayback.getOrigin(id2))
+      .to.equal("f9897c6c8d74c3ce94e613ba78eedc9db1230912");
+
+    // insert data after insertId
+    // this makes id2 change again
+    let insertData2 = {message: "so I forgot another thing"};
+    wayback.insert(insertId, insertData2);
+
+    expect(wayback.getOrigin(id2))
+      .to.equal("068cabaebb9b09c06b7300d38056b089e7ed7bb0");
+  });
+
+  it("does keep pseudonyms on insert", () => {
+    let data = {message: "sup"};
+    let id = wayback.push(data);
+
+    let data2 = {message: "sup again"};
+    let id2 = wayback.push(data2);
+
+    // insert data after id
     // this makes id2 change
     let insertData = {message: "so I forgot something"};
     wayback.insert(id, insertData);
@@ -315,5 +341,29 @@ describe("wayback tests", () => {
     let insertData2 = {message: "very forgetful"};
     expect(wayback.insert(id2, insertData2))
       .to.equal("65cb25d527d0873d41a79d2ad80fa67f328c348a");
+  });
+
+  it("does keep second order pseudonyms on insert", () => {
+    let data = {message: "sup"};
+    let id = wayback.push(data);
+
+    let data2 = {message: "sup again"};
+    let id2 = wayback.push(data2);
+
+    // insert data after id
+    // this makes id2 change
+    let insertData = {message: "so I forgot something"};
+    let insertId = wayback.insert(id, insertData);
+
+    // insert data after insertId
+    // this makes id2 change again
+    let insertData2 = {message: "so I forgot another thing"};
+    wayback.insert(insertId, insertData2);
+
+    // insert data with the old id2,
+    // which should still work as a pseudonym
+    let insertData3 = {message: "very forgetful"};
+    expect(wayback.insert(id2, insertData3))
+      .to.equal("75333751797a4cd6f8aa870f184d25cb8f1672a5");
   });
 });

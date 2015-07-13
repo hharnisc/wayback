@@ -56,6 +56,15 @@ export class Wayback {
     }
   }
 
+  getOrigin(revision) {
+    let origin = this[pseudonyms][revision];
+    if (origin) {
+      return this.getOrigin(origin);
+    } else {
+      return revision;
+    }
+  }
+
   getSequence(revision) {
     if (this.hasRevision(revision)) {
       let sequence = [];
@@ -125,9 +134,7 @@ export class Wayback {
 
   insert(parent, data) {
     // check for a pseudonym
-    if (this[pseudonyms][parent]) {
-      parent = this[pseudonyms][parent];
-    }
+    parent = this.getOrigin(parent);
     // unknown parent
     if (!this.hasRevision(parent)) {
       return null;
