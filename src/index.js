@@ -51,12 +51,12 @@ export class Wayback {
   }
 
   hasRevision(revision) {
-    return revision in this[model];
+    return this.getOrigin(revision) in this[model];
   }
 
   getRevision(revision) {
     if (this.hasRevision(revision)) {
-      return this[model][revision];
+      return this[model][this.getOrigin(revision)];
     } else {
       return null;
     }
@@ -74,7 +74,7 @@ export class Wayback {
   getSequence(revision) {
     if (this.hasRevision(revision)) {
       let sequence = [];
-      let curRevision = this[model][revision].child;
+      let curRevision = this[model][this.getOrigin(revision)].child;
       while (curRevision) {
         let curModel = this[model][curRevision];
         sequence.push(curModel.data);
@@ -142,25 +142,29 @@ export class Wayback {
     return item;
   }
 
-  insert(parent, data) {
+  insert(parentRevision, data) {
     // check for a pseudonym
-    let originParent = this.getOrigin(parent);
+    let originParentRevison = this.getOrigin(parentRevision);
     // unknown parent
-    if (!this.hasRevision(originParent)) {
+    if (!this.hasRevision(originParentRevison)) {
       return null;
     }
     // just do a push op when inserting to head
-    if (originParent === this[head]) {
+    if (originParentRevison === this[head]) {
       return this.push(data);
     }
-    let parentModel = this[model][originParent];
+    let parentModel = this[model][originParentRevison];
     let oldChild = parentModel.child;
 
     // create a new node with links:
-    // originParent <- newNode -> child
-    let insertId = this[createNode](originParent, data, parentModel.child);
+    // originParentRevison <- newNode -> child
+    let insertId = this[createNode](
+      originParentRevison,
+      data,
+      parentModel.child
+    );
 
-    // originParent -> newNode
+    // originParentRevison -> newNode
     parentModel.child = insertId;
 
 
@@ -180,7 +184,7 @@ export class Wayback {
       this[pseudonymMap][curNodeId] = newInsertId;
       this[updatePseudonyms](newInsertId, curNodeId);
 
-      // update the originParent with the new child id
+      // update the originParentRevison with the new child id
       this[model][prevInsertId].child = newInsertId;
       prevInsertId = newInsertId;
 

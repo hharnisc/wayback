@@ -490,4 +490,61 @@ describe("wayback tests", () => {
     expect(wayback.exportModel().pseudonyms).to.eql({});
     expect(wayback.exportModel().pseudonymMap).to.eql({});
   });
+
+  it("does use pseudonyms to verify revision exists", () => {
+    let data = {message: "sup"};
+    let id = wayback.push(data);
+
+    let data2 = {message: "sup again"};
+    let id2 = wayback.push(data2);
+
+    // insert data after id
+    // this makes id2 change
+    let insertData = {message: "so I forgot something"};
+    wayback.insert(id, insertData);
+
+    // make sure we can still use id2
+    expect(wayback.hasRevision(id2)).to.equal(true);
+  });
+
+  it("does use pseudonyms to find a revision data", () => {
+    let data = {message: "sup"};
+    let id = wayback.push(data);
+
+    let data2 = {message: "sup again"};
+    let id2 = wayback.push(data2);
+
+    // insert data after id
+    // this makes id2 change
+    let insertData = {message: "so I forgot something"};
+    wayback.insert(id, insertData);
+
+    // make sure we can still use id2
+    let revisionData = wayback.getRevision(id2);
+    expect(revisionData).to.not.equal(undefined);
+    expect(revisionData).to.not.equal(null);
+    expect(revisionData.data).to.eql(data2);
+  });
+
+  it("does use pseudonyms to find sequence", () => {
+    expect(wayback.getSequence("youdontknowme")).to.equal(null);
+
+    let data = {message: "sup"};
+    let id = wayback.push(data);
+
+    let data2 = {message: "sup2"};
+    let id2 = wayback.push(data2);
+
+    let data3 = {message: "sup3"};
+    wayback.push(data3);
+
+    // insert data after id
+    // this makes id2 change
+    let insertData = {message: "so I forgot something"};
+    let insertId = wayback.insert(id, insertData);
+
+    expect(wayback.getSequence(id2)).to.eql([data3]);
+    expect(wayback.getSequence(insertId)).to.eql([data2, data3]);
+    expect(wayback.getSequence(id)).to.eql([insertData, data2, data3]);
+  });
 });
