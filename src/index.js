@@ -67,9 +67,9 @@ export class Wayback {
     }
   }
 
-  push(data) {
+  push(data, revision=null) {
     // create a new node
-    let id = this[createNode](this[head], data);
+    let id = this[createNode](this[head], data, revision);
 
     // set the new node as the child of the
     // parent if it exists
@@ -127,7 +127,7 @@ export class Wayback {
     }
     // just do a push op when inserting to head
     if (parentRevision === this[head]) {
-      return this.push(data);
+      return this.push(data, revision);
     }
     let parentModel = this[model][parentRevision];
     let childModel = this[model][parentModel.child];
