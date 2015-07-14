@@ -120,7 +120,7 @@ export class Wayback {
     return item;
   }
 
-  insert(parentRevision, revision, data) {
+  insert(parentRevision, data, revision=null) {
     // unknown parent
     if (!this.hasRevision(parentRevision)) {
       return null;

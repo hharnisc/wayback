@@ -127,7 +127,7 @@ describe("wayback tests", () => {
 
     // insert data as id2 child
     let insertData = {message: "so I forgot something"};
-    let insertId = wayback.insert(id2, uuid.v4(), insertData);
+    let insertId = wayback.insert(id2, insertData, uuid.v4());
 
     let expectedOrder = [
       {id: id, data: data},
@@ -176,7 +176,7 @@ describe("wayback tests", () => {
     let id = wayback.push(data);
 
     let insertData = "hello!";
-    let insertId = wayback.insert(id, uuid.v4(), insertData);
+    let insertId = wayback.insert(id, insertData, uuid.v4());
 
     expect(wayback.head()).to.equal(insertId);
 
@@ -188,7 +188,7 @@ describe("wayback tests", () => {
 
   it("does return null when missing parent", () => {
     let insertData = "hello!";
-    let insertId = wayback.insert("youdontknowme", uuid.v4(), insertData);
+    let insertId = wayback.insert("youdontknowme", insertData, uuid.v4());
     expect(insertId).to.equal(null);
   });
 
@@ -242,7 +242,7 @@ describe("wayback tests", () => {
     expect(shortWayback.tail()).to.equal(id);
 
     let data2 = "another short message";
-    let insertId = shortWayback.insert(id, uuid.v4(), data2);
+    let insertId = shortWayback.insert(id, data2, uuid.v4());
 
     expect(shortWayback.length()).to.equal(2);
     expect(shortWayback.head()).to.equal(id2);
