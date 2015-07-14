@@ -120,7 +120,7 @@ export class Wayback {
     return item;
   }
 
-  insert(parentRevision, data) {
+  insert(parentRevision, revision, data) {
     // unknown parent
     if (!this.hasRevision(parentRevision)) {
       return null;
@@ -137,7 +137,8 @@ export class Wayback {
     let insertId = this[createNode](
       parentRevision,
       data,
-      parentModel.child
+      parentModel.child,
+      revision
     );
 
     // parentRevision -> newNode
@@ -155,16 +156,18 @@ export class Wayback {
     return insertId;
   }
 
-  [createNode](parent, data, child=null) {
-    let id = uuid.v4();
+  [createNode](parent, data, child=null, revision=null) {
+    if (!revision) {
+      revision = uuid.v4();
+    }
 
     // create a new node
-    this[model][id] = {
+    this[model][revision] = {
       data: data,
       parent: parent,
       child: child
     };
-    return id;
+    return revision;
   }
 
   length() {
