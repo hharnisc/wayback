@@ -1,7 +1,6 @@
 "use strict";
 
 import { expect } from "chai";
-import sha1 from "sha-1";
 import { Wayback } from "../src/index";
 
 
@@ -113,24 +112,29 @@ describe("wayback tests", () => {
   it("does insert at parent", () => {
     let model = wayback.model();
     let data = {message: "sup"};
-    wayback.push(data);
+    let id = wayback.push(data);
 
     let data2 = {message: "sup again"};
     let id2 = wayback.push(data2);
 
     let data3 = {message: "oh hey again"};
-    wayback.push(data3);
+    let id3 = wayback.push(data3);
 
     let data4 = {message: "just wanted to say hi one more time"};
-    wayback.push(data4);
+    let id4 = wayback.push(data4);
 
 
     // insert data as id2 child
     let insertData = {message: "so I forgot something"};
-    wayback.insert(id2, insertData);
+    let insertId = wayback.insert(id2, insertData);
 
-    let expectedDataOrder = [data, data2, insertData, data3, data4];
-
+    let expectedOrder = [
+      {id: id, data: data},
+      {id: id2, data: data2},
+      {id: insertId, data: insertData},
+      {id: id3, data: data3},
+      {id: id4, data: data4},
+    ];
 
     let curModelId = wayback.tail();
     let curIdx = 0;
@@ -139,14 +143,8 @@ describe("wayback tests", () => {
     while (curModelId) {
       let curModel = model[curModelId];
 
-      expect(curModel.data).to.equal(expectedDataOrder[curIdx]);
-
-      // make sure the id is correct
-      let calcId = sha1(JSON.stringify({
-        parent: curModel.parent,
-        data: curModel.data
-      }));
-      expect(calcId).to.equal(curModelId);
+      expect(curModel.data).to.equal(expectedOrder[curIdx].data);
+      expect(curModelId).to.equal(expectedOrder[curIdx].id);
 
       // make sure the parent is linked
       if (curModel.parent) {
@@ -161,12 +159,12 @@ describe("wayback tests", () => {
       }
 
       curIdx += 1;
-      if (curIdx === expectedDataOrder.length) {
+      if (curIdx === expectedOrder.length) {
         expectedHead = curModelId;
       }
       curModelId = curModel.child;
     }
-    expect(curIdx).to.equal(expectedDataOrder.length);
+    expect(curIdx).to.equal(expectedOrder.length);
     expect(expectedHead).to.equal(wayback.head());
     expect(wayback.length()).to.equal(5);
   });
@@ -246,7 +244,7 @@ describe("wayback tests", () => {
     let insertId = shortWayback.insert(id, data2);
 
     expect(shortWayback.length()).to.equal(2);
-    expect(shortWayback.head()).to.equal(shortWayback.getOrigin(id2));
+    expect(shortWayback.head()).to.equal(id2);
     expect(shortWayback.tail()).to.equal(insertId);
 
     // NOTE: it's important to keep the parent
@@ -290,261 +288,31 @@ describe("wayback tests", () => {
   it("does export model", () => {
     wayback.push({message: "sup"});
     let exportedModel = wayback.exportModel();
-    expect(exportedModel).to.eql({
-      model: {
-        b074a570a0cd00c34b9eff1d825229b6607bdd3e: {
-          data: {message: "sup"}, parent: null, child: null
-        }
-      },
-      length: 1,
-      head: "b074a570a0cd00c34b9eff1d825229b6607bdd3e",
-      tail: "b074a570a0cd00c34b9eff1d825229b6607bdd3e",
-      pseudonymMap: {},
-      pseudonyms: {}
-    });
+    expect(exportedModel.length).to.equal(wayback.length());
+    expect(exportedModel.model).to.eql(wayback.model());
+    expect(exportedModel.head).to.equal(wayback.head());
+    expect(exportedModel.tail).to.equal(wayback.tail());
   });
 
   it("does import model", () => {
     wayback.importModel({
       model: {
-        b074a570a0cd00c34b9eff1d825229b6607bdd3e: {
+        ello: {
           data: {message: "sup"}, parent: null, child: null
         }
       },
       length: 1,
-      head: "b074a570a0cd00c34b9eff1d825229b6607bdd3e",
-      tail: "b074a570a0cd00c34b9eff1d825229b6607bdd3e",
-      pseudonymMap: {},
-      pseudonyms: {}
+      head: "ello",
+      tail: "ello"
     });
 
     expect(wayback.length()).to.equal(1);
-    expect(wayback.head()).to.equal("b074a570a0cd00c34b9eff1d825229b6607bdd3e");
-    expect(wayback.tail()).to.equal("b074a570a0cd00c34b9eff1d825229b6607bdd3e");
+    expect(wayback.head()).to.equal("ello");
+    expect(wayback.tail()).to.equal("ello");
     expect(wayback.model()).to.eql({
-      b074a570a0cd00c34b9eff1d825229b6607bdd3e: {
+      ello: {
         data: {message: "sup"}, parent: null, child: null
       }
     });
-  });
-
-  it("does get origin name from pseudonym", () => {
-    let data = {message: "sup"};
-    let id = wayback.push(data);
-
-    let data2 = {message: "sup again"};
-    let id2 = wayback.push(data2);
-
-    // insert data after id
-    // this makes id2 change
-    let insertData = {message: "so I forgot something"};
-    let insertId = wayback.insert(id, insertData);
-
-    // console.log(wayback.model());
-
-    expect(wayback.getOrigin(id2))
-      .to.equal("f9897c6c8d74c3ce94e613ba78eedc9db1230912");
-
-    // insert data after insertId
-    // this makes id2 change again
-    let insertData2 = {message: "so I forgot another thing"};
-    wayback.insert(insertId, insertData2);
-
-    expect(wayback.getOrigin(id2))
-      .to.equal("068cabaebb9b09c06b7300d38056b089e7ed7bb0");
-  });
-
-  it("does keep pseudonyms on insert", () => {
-    let data = {message: "sup"};
-    let id = wayback.push(data);
-
-    let data2 = {message: "sup again"};
-    let id2 = wayback.push(data2);
-
-    // insert data after id
-    // this makes id2 change
-    let insertData = {message: "so I forgot something"};
-    wayback.insert(id, insertData);
-
-    // insert data with the old id2,
-    // which should still work as a pseudonym
-    let insertData2 = {message: "very forgetful"};
-    expect(wayback.insert(id2, insertData2))
-      .to.equal("65cb25d527d0873d41a79d2ad80fa67f328c348a");
-  });
-
-  it("does keep second order pseudonyms on insert", () => {
-    let data = {message: "sup"};
-    let id = wayback.push(data);
-
-    let data2 = {message: "sup again"};
-    let id2 = wayback.push(data2);
-
-    // insert data after id
-    // this makes id2 change
-    let insertData = {message: "so I forgot something"};
-    let insertId = wayback.insert(id, insertData);
-
-    // insert data after insertId
-    // this makes id2 change again
-    let insertData2 = {message: "so I forgot another thing"};
-    wayback.insert(insertId, insertData2);
-
-    // insert data with the old id2,
-    // which should still work as a pseudonym
-    let insertData3 = {message: "very forgetful"};
-    expect(wayback.insert(id2, insertData3))
-      .to.equal("75333751797a4cd6f8aa870f184d25cb8f1672a5");
-
-    // make sure pseudonyms and pseudonymMap are valid
-    let model = wayback.exportModel();
-    expect(model.pseudonyms).to.eql(
-      { "068cabaebb9b09c06b7300d38056b089e7ed7bb0":
-        [
-          "c0f8c4a7ae3682509dbc4afb5e02c34ce23b1640",
-          "f9897c6c8d74c3ce94e613ba78eedc9db1230912"
-        ]
-      }
-    );
-
-    expect(model.pseudonymMap).to.eql({
-      c0f8c4a7ae3682509dbc4afb5e02c34ce23b1640:
-      'f9897c6c8d74c3ce94e613ba78eedc9db1230912',
-      f9897c6c8d74c3ce94e613ba78eedc9db1230912:
-      '068cabaebb9b09c06b7300d38056b089e7ed7bb0'
-    });
-  });
-
-  it("does prune pseudonyms when they fall out of scope", () => {
-    let data = {message: "sup"};
-    let id = wayback.push(data);
-
-    // id
-
-    let data2 = {message: "sup again"};
-    wayback.push(data2);
-
-    // id, id2
-
-    let data3 = {message: "oh hey"};
-    wayback.push(data3);
-
-    // id, id2, id3
-
-    // insert data after id
-    // this makes id2 change
-    let insertData = {message: "so I forgot something"};
-    let insertId = wayback.insert(id, insertData);
-
-    // id, insertId, id2, id3 <- id2 and id3 have pseudonyms
-
-    // insert data after insertId
-    // this makes id2 change again
-    let insertData2 = {message: "so I forgot another thing"};
-    wayback.insert(insertId, insertData2);
-
-    // id, insertId, insertId2, id2, id3 <- id2 and id3 have 2 pseudonyms
-
-    wayback.pop(); // insertId, insertId2, id2, id3
-    wayback.pop(); // insertId2, id2, id3
-    wayback.pop(); // id2, id3
-
-    // make sure all pseudonyms and maps are in place
-    expect(wayback.exportModel().pseudonyms).to.eql({
-      '068cabaebb9b09c06b7300d38056b089e7ed7bb0':
-       [ 'c0f8c4a7ae3682509dbc4afb5e02c34ce23b1640',
-         'f9897c6c8d74c3ce94e613ba78eedc9db1230912' ],
-      '32dd776b493278455bc4a82c806f7188e2eeb91a':
-       [ 'c0b0a8f77e897e4c50835220c81838302a663813',
-         'a169d027529f6deaa6c19529791b4e5b44c8c682' ]
-    });
-
-    expect(wayback.exportModel().pseudonymMap).to.eql({
-      c0f8c4a7ae3682509dbc4afb5e02c34ce23b1640:
-        'f9897c6c8d74c3ce94e613ba78eedc9db1230912',
-      c0b0a8f77e897e4c50835220c81838302a663813:
-        'a169d027529f6deaa6c19529791b4e5b44c8c682',
-      f9897c6c8d74c3ce94e613ba78eedc9db1230912:
-        '068cabaebb9b09c06b7300d38056b089e7ed7bb0',
-      a169d027529f6deaa6c19529791b4e5b44c8c682:
-      '32dd776b493278455bc4a82c806f7188e2eeb91a' });
-
-    wayback.pop(); // id3 <- pseudonyms get deleted with id2
-
-    // make sure all pseudonyms and maps are in place
-    expect(wayback.exportModel().pseudonyms).to.eql({
-      '32dd776b493278455bc4a82c806f7188e2eeb91a':
-       [ 'c0b0a8f77e897e4c50835220c81838302a663813',
-         'a169d027529f6deaa6c19529791b4e5b44c8c682' ]
-    });
-
-    expect(wayback.exportModel().pseudonymMap).to.eql({
-      c0b0a8f77e897e4c50835220c81838302a663813:
-        'a169d027529f6deaa6c19529791b4e5b44c8c682',
-      a169d027529f6deaa6c19529791b4e5b44c8c682:
-      '32dd776b493278455bc4a82c806f7188e2eeb91a' });
-
-    wayback.pop(); // <- pseudonyms get deleted with id3
-
-    // make sure pseudonyms and pseudonymMap are valid
-    expect(wayback.exportModel().pseudonyms).to.eql({});
-    expect(wayback.exportModel().pseudonymMap).to.eql({});
-  });
-
-  it("does use pseudonyms to verify revision exists", () => {
-    let data = {message: "sup"};
-    let id = wayback.push(data);
-
-    let data2 = {message: "sup again"};
-    let id2 = wayback.push(data2);
-
-    // insert data after id
-    // this makes id2 change
-    let insertData = {message: "so I forgot something"};
-    wayback.insert(id, insertData);
-
-    // make sure we can still use id2
-    expect(wayback.hasRevision(id2)).to.equal(true);
-  });
-
-  it("does use pseudonyms to find a revision data", () => {
-    let data = {message: "sup"};
-    let id = wayback.push(data);
-
-    let data2 = {message: "sup again"};
-    let id2 = wayback.push(data2);
-
-    // insert data after id
-    // this makes id2 change
-    let insertData = {message: "so I forgot something"};
-    wayback.insert(id, insertData);
-
-    // make sure we can still use id2
-    let revisionData = wayback.getRevision(id2);
-    expect(revisionData).to.not.equal(undefined);
-    expect(revisionData).to.not.equal(null);
-    expect(revisionData.data).to.eql(data2);
-  });
-
-  it("does use pseudonyms to find sequence", () => {
-    expect(wayback.getSequence("youdontknowme")).to.equal(null);
-
-    let data = {message: "sup"};
-    let id = wayback.push(data);
-
-    let data2 = {message: "sup2"};
-    let id2 = wayback.push(data2);
-
-    let data3 = {message: "sup3"};
-    wayback.push(data3);
-
-    // insert data after id
-    // this makes id2 change
-    let insertData = {message: "so I forgot something"};
-    let insertId = wayback.insert(id, insertData);
-
-    expect(wayback.getSequence(id2)).to.eql([data3]);
-    expect(wayback.getSequence(insertId)).to.eql([data2, data3]);
-    expect(wayback.getSequence(id)).to.eql([insertData, data2, data3]);
   });
 });

@@ -1,6 +1,6 @@
 "use strict";
 
-import sha1 from "sha-1";
+import uuid from "uuid";
 
 const model = Symbol("model");
 const modelLength = Symbol("length");
@@ -8,16 +8,10 @@ const head = Symbol("head");
 const tail = Symbol("tail");
 const createNode = Symbol("createNode");
 const maxRevisions = Symbol("maxRevisions");
-const pseudonymMap = Symbol("pseudonymMap");
-const pseudonyms = Symbol("pseudonyms");
-const updatePseudonyms = Symbol("updatePseudonyms");
-const prunePseudonyms = Symbol("prunePseudonyms");
 
 export class Wayback {
   constructor(maximumRevisions=null) {
     this[model] = {};
-    this[pseudonymMap] = {};
-    this[pseudonyms] = {};
     this[modelLength] = 0;
     this[head] = null;
     this[tail] = null;
@@ -33,9 +27,7 @@ export class Wayback {
       model: this[model],
       length: this[modelLength],
       head: this[head],
-      tail: this[tail],
-      pseudonymMap: this[pseudonymMap],
-      pseudonyms: this[pseudonyms]
+      tail: this[tail]
     };
   }
 
@@ -46,35 +38,24 @@ export class Wayback {
     this[modelLength] = newModel.length;
     this[tail] = newModel.tail;
     this[head] = newModel.head;
-    this[pseudonymMap] = newModel.pseudonymMap;
-    this[pseudonyms] = newModel.pseudonyms;
   }
 
   hasRevision(revision) {
-    return this.getOrigin(revision) in this[model];
+    return revision in this[model];
   }
 
   getRevision(revision) {
     if (this.hasRevision(revision)) {
-      return this[model][this.getOrigin(revision)];
+      return this[model][revision];
     } else {
       return null;
-    }
-  }
-
-  getOrigin(revision) {
-    let origin = this[pseudonymMap][revision];
-    if (origin) {
-      return this.getOrigin(origin);
-    } else {
-      return revision;
     }
   }
 
   getSequence(revision) {
     if (this.hasRevision(revision)) {
       let sequence = [];
-      let curRevision = this[model][this.getOrigin(revision)].child;
+      let curRevision = this[model][revision].child;
       while (curRevision) {
         let curModel = this[model][curRevision];
         sequence.push(curModel.data);
@@ -124,9 +105,6 @@ export class Wayback {
 
     delete this[model][this[tail]];
 
-    // prune any pseudonyms associated with the tail node
-    this[prunePseudonyms](this[tail]);
-
     // if there are 2 or more revisions update the child
     if (this[modelLength] > 1) {
       this[tail] = modelItem.child;
@@ -143,62 +121,30 @@ export class Wayback {
   }
 
   insert(parentRevision, data) {
-    // check for a pseudonym
-    let originParentRevison = this.getOrigin(parentRevision);
     // unknown parent
-    if (!this.hasRevision(originParentRevison)) {
+    if (!this.hasRevision(parentRevision)) {
       return null;
     }
     // just do a push op when inserting to head
-    if (originParentRevison === this[head]) {
+    if (parentRevision === this[head]) {
       return this.push(data);
     }
-    let parentModel = this[model][originParentRevison];
-    let oldChild = parentModel.child;
+    let parentModel = this[model][parentRevision];
+    let childModel = this[model][parentModel.child];
 
     // create a new node with links:
-    // originParentRevison <- newNode -> child
+    // parentRevision <- newNode -> child
     let insertId = this[createNode](
-      originParentRevison,
+      parentRevision,
       data,
       parentModel.child
     );
 
-    // originParentRevison -> newNode
+    // parentRevision -> newNode
     parentModel.child = insertId;
 
-
-    let curNodeId = oldChild;
-    let prevInsertId = insertId;
-    while (curNodeId) {
-      let curNode = this[model][curNodeId];
-
-      // insert the new node
-      let newInsertId = this[createNode](
-        prevInsertId,
-        curNode.data,
-        curNode.child
-      );
-
-      // add a pseudonym
-      this[pseudonymMap][curNodeId] = newInsertId;
-      this[updatePseudonyms](newInsertId, curNodeId);
-
-      // update the originParentRevison with the new child id
-      this[model][prevInsertId].child = newInsertId;
-      prevInsertId = newInsertId;
-
-      // remove the old node
-      delete this[model][curNodeId];
-
-      // update the head ref
-      if (curNode.child === null) {
-        this[head] = newInsertId;
-      }
-
-      // increment node
-      curNodeId = curNode.child;
-    }
+    // newNode <- child
+    childModel.parent = insertId;
 
     // increment the model length
     this[modelLength] += 1;
@@ -210,10 +156,7 @@ export class Wayback {
   }
 
   [createNode](parent, data, child=null) {
-    let id = sha1(JSON.stringify({
-      parent: parent,
-      data: data
-    }));
+    let id = uuid.v4();
 
     // create a new node
     this[model][id] = {
@@ -222,28 +165,6 @@ export class Wayback {
       child: child
     };
     return id;
-  }
-
-  [updatePseudonyms](newRoot, oldRoot) {
-    if (oldRoot in this[pseudonyms]) {
-      this[pseudonyms][oldRoot].push(oldRoot);
-      this[pseudonyms][newRoot] = this[pseudonyms][oldRoot];
-      delete this[pseudonyms][oldRoot];
-    } else {
-      this[pseudonyms][newRoot] = [oldRoot];
-    }
-  }
-
-  [prunePseudonyms](revision) {
-    if (revision in this[pseudonyms]) {
-      for (var pseudo in this[pseudonyms][revision]) {
-        if (this[pseudonyms][revision].hasOwnProperty(pseudo)) {
-          let pseudonymRevision = this[pseudonyms][revision][pseudo];
-          delete this[pseudonymMap][pseudonymRevision];
-        }
-      }
-      delete this[pseudonyms][revision];
-    }
   }
 
   length() {
